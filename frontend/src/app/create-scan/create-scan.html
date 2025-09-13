@@ -1,0 +1,18 @@
+<h2>Start Scan</h2>
+<form (ngSubmit)="createScan()">
+  <div>
+    <label>Chat Bot Url:</label>
+    <select [(ngModel)]="url" name="url" required>
+      <option *ngFor="let url of urls" [value]="url">{{ url }}</option>
+    </select>
+  </div>
+
+  <div>
+    <label>Suite:</label>
+    <select [(ngModel)]="suite" name="suite" required>
+      <option *ngFor="let suite of suites" [value]="suite">{{ suite }}</option>
+    </select>
+  </div>
+
+  <button type="submit" [disabled]="isLoading">Create New Scan</button>
+</form>

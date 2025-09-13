@@ -1,0 +1,4 @@
+<h2>Scan in progress...</h2>
+<p><strong>Scan ID:</strong> {{ scanId }}</p>
+<p><strong>Progress:</strong> {{ progress }}</p>
+<progress [value]="progress.replace('%', '')" max="100"></progress>

@@ -1,0 +1,19 @@
+<div class="container">
+  <div class="card">
+    <app-create-scan (scanStarted)="addScan($event)"></app-create-scan>
+  </div>
+
+  <div *ngFor="let scan of scans" class="card">
+    <div *ngIf="!scan.isCompleted">
+      <app-scan-status
+        [scanId]="scan.scanId"
+        (scanCompleted)="updateScanResults(scan.scanId, $event)"
+      >
+      </app-scan-status>
+    </div>
+
+    <div *ngIf="scan.isCompleted">
+      <app-scan-results [results]="scan.results"></app-scan-results>
+    </div>
+  </div>
+</div>

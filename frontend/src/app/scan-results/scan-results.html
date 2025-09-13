@@ -1,0 +1,17 @@
+<h2>Scan Results</h2>
+<table class="results-table">
+  <thead>
+    <tr>
+      <th>Prompt</th>
+      <th>Status</th>
+      <th>Response</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let result of results; let i = index">
+      <td>{{ result.prompt }}</td>
+      <td>{{ result.status }}</td>
+      <td>{{ result.response }}</td>
+    </tr>
+  </tbody>
+</table>
