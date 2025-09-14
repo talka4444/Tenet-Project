@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 from suites import suites
 
-DATABASE_URL = "sqlite:///./test_db2.db"
+DATABASE_URL = "sqlite:///./tenet.db"
 
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 
@@ -16,6 +16,8 @@ def init_db():
 
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
+    
+    # we add all the suites and prompts to the DB if doesn't already exists
     try:
         for suite_enum, prompt_list in suites.items():
             suite_obj = db.query(Suite).filter_by(name=suite_enum.value).first()

@@ -1,14 +1,14 @@
 from celery import Celery
 from faker import Faker
-from fastapi import HTTPException, status
 import requests
+import os
 
 fake = Faker()
 
 celery_app = Celery(
     "tasks",
-    broker="redis://localhost:6379/0",
-    backend="redis://localhost:6379/0",
+    broker=f"{os.getenv("REDIS_URL", "redis//localhost:6379")}/0",
+    backend=f"{os.getenv("REDIS_URL", "redis//localhost:6379")}/0",
 )
 
 @celery_app.task

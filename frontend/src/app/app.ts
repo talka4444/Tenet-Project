@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { CreateScan } from './create-scan/create-scan';
 import { ScanResults } from './scan-results/scan-results';
 import { ScanStatus } from './scan-status/scan-status';

@@ -25,6 +25,7 @@ def create_scan(scan: ScanRequest, session: Session = Depends(get_session)):
     session.add(db_scan)
 
     for prompt in prompts:
+        # create async task for each prompt 
         celery_task = run_prompt.delay(scan.url, prompt)
         db_task = Task(id=celery_task.id, prompt=prompt, scan=db_scan)
         session.add(db_task)
@@ -59,7 +60,7 @@ def get_results(scanId: str, session: Session = Depends(get_session)):
     for task in scan.tasks:
         task_status = AsyncResult(task.id, app=celery_app)
         if task_status.ready():
-            print(task_status.result)
+            # get only the latest prompt run response
             last_response = task_status.result['response']['agent_activity'][-1]['response']
             results.append({"prompt": task.prompt, "response": last_response, "status": "Finished"})
         else:
@@ -71,3 +72,8 @@ def get_results(scanId: str, session: Session = Depends(get_session)):
 def get_all_suites(session: Session = Depends(get_session)):
     suites = session.query(Suite).all()
     return [suite.name for suite in suites]
+
+@app.get('/scans')
+def get_all_scans(session: Session = Depends(get_session)):
+    scans = session.query(Scan).all()
+    return scans
