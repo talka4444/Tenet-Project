@@ -1,5 +1,6 @@
 import uuid
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
+from fastapi.responses import JSONResponse
 from app import create_app
 from sqlalchemy.orm import Session
 from models.suite import Suite
@@ -9,12 +10,24 @@ from models.scan import ScanRequest, Scan
 from models.task import Task
 from tasks import run_prompt, celery_app
 from celery.result import AsyncResult
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 init_db()
 app = create_app()
+limiter = Limiter(key_func=get_remote_address) # create rate limit to a specific user
+
+@app.exception_handler(RateLimitExceeded)
+async def rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    return JSONResponse(
+        status_code=429,
+        content={"message": "Too many requests, slow down!"}
+    )
 
 @app.post("/scan")
-def create_scan(scan: ScanRequest, session: Session = Depends(get_session)):
+@limiter.limit("5/minute") # user can make 5 requests per minute
+def create_scan(request: Request, scan: ScanRequest, session: Session = Depends(get_session)):
     scan_id: str = str(uuid.uuid4())
     try:
         prompts: list[str] = suites.get(SuitesOptions(scan.suite), None)
@@ -27,7 +40,7 @@ def create_scan(scan: ScanRequest, session: Session = Depends(get_session)):
     for prompt in prompts:
         # create async task for each prompt 
         celery_task = run_prompt.delay(scan.url, prompt)
-        db_task = Task(id=celery_task.id, prompt=prompt, scan=db_scan)
+        db_task = Task(id=celery_task.id, prompt=prompt, isCompleted=False, scan=db_scan)
         session.add(db_task)
     
     session.commit()
@@ -43,12 +56,14 @@ def get_status(scanId: str, session: Session = Depends(get_session)):
     completed_tasks: int = 0
 
     for task in scan.tasks:
+        db_task = session.query(Task).filter(Task.id == task.id).first()
         task_status = AsyncResult(task.id, app=celery_app) 
         if task_status.ready():
             completed_tasks+=1
-
+            db_task.isCompleted = True
+            session.commit()
     
-    return {"completed": f"{((completed_tasks / total_tasks) * 100):.2f}%"}
+    return {"completed": f"{((completed_tasks / total_tasks) * 100):.2f}%"} # calculate how many tasks are completed
 
 @app.get('/results/{scanId}')
 def get_results(scanId: str, session: Session = Depends(get_session)):
@@ -76,4 +91,14 @@ def get_all_suites(session: Session = Depends(get_session)):
 @app.get('/scans')
 def get_all_scans(session: Session = Depends(get_session)):
     scans = session.query(Scan).all()
-    return scans
+    result = []
+
+    for scan in scans:
+        db_task = session.query(Task).filter(Task.scan_id == scan.id).first()
+        result.append({
+            "id": scan.id,
+            "url": scan.url,
+            "completed": db_task.isCompleted
+        })
+    
+    return result

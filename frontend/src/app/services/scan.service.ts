@@ -12,6 +12,11 @@ export interface ResultsResponse {
   ScanId: string;
   results: ScanResult[];
 }
+export interface ScanItem {
+  scanId: string;
+  results: ScanResult[];
+  isCompleted: boolean;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -21,8 +26,14 @@ export class ScanService {
 
   constructor(private http: HttpClient) {}
 
-  getSuites(): Observable<string[]> {
+  getAllSuites(): Observable<string[]> {
     return this.http.get<string[]>(this.apiUrl + '/suites');
+  }
+
+  getAllScans(): Observable<{ id: string; url: string; completed: string }[]> {
+    return this.http.get<{ id: string; url: string; completed: string }[]>(
+      this.apiUrl + '/scans'
+    );
   }
 
   createScan(data: { url: string; suite: string }): Observable<string> {

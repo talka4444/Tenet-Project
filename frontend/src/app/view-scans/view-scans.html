@@ -1,0 +1,21 @@
+<div class="card">
+  <h2>All Scans</h2>
+  <div *ngIf="isLoading">Loading scans...</div>
+  <table *ngIf="!isLoading && scans.length > 0" class="results-table">
+    <thead>
+      <tr>
+        <th>Scan ID</th>
+        <th>url</th>
+        <th>Completed</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let scan of scans">
+        <td>{{ scan.id }}</td>
+        <td>{{ scan.url }}</td>
+        <td>{{ scan.completed }}</td>
+      </tr>
+    </tbody>
+  </table>
+  <div *ngIf="!isLoading && scans.length === 0">No scans yet.</div>
+</div>

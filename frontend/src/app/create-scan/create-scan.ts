@@ -23,7 +23,7 @@ export class CreateScan implements OnInit {
   constructor(private scanService: ScanService) {}
 
   ngOnInit(): void {
-    this.scanService.getSuites().subscribe({
+    this.scanService.getAllSuites().subscribe({
       next: (names) => {
         this.suites = names;
       },
