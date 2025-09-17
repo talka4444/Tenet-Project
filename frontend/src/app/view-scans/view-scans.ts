@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ScanService } from '../services/scan.service';
+import { ScanInformation, ScanService } from '../services/scan.service';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -9,8 +9,8 @@ import { CommonModule } from '@angular/common';
   styleUrl: './view-scans.css',
 })
 export class ViewScans implements OnInit {
-  scans: { id: string; url: string; completed: string }[] = [];
-  isLoading = true;
+  scans: ScanInformation[] = [];
+  isLoading: boolean = true;
 
   constructor(private scanService: ScanService) {}
 
@@ -25,5 +25,9 @@ export class ViewScans implements OnInit {
         this.isLoading = false;
       },
     });
+  }
+
+  toggleTranscript(scan: any) {
+    scan.expanded = !scan.expanded;
   }
 }

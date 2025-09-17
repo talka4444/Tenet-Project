@@ -6,15 +6,39 @@
       <tr>
         <th>Scan ID</th>
         <th>url</th>
-        <th>Completed</th>
+        <th>Transcript</th>
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let scan of scans">
-        <td>{{ scan.id }}</td>
-        <td>{{ scan.url }}</td>
-        <td>{{ scan.completed }}</td>
-      </tr>
+      <ng-container *ngFor="let scan of scans">
+        <tr>
+          <td>{{ scan.id }}</td>
+          <td>{{ scan.url }}</td>
+          <td>
+            <button (click)="toggleTranscript(scan)">
+              {{ scan.expanded ? "Hide" : "Expand" }}
+            </button>
+          </td>
+        </tr>
+        <tr *ngIf="scan.expanded">
+          <td colspan="3">
+            <table class="inner-table">
+              <thead>
+                <tr>
+                  <th>Prompt</th>
+                  <th>Response</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let prompt of scan.prompts; let i = index">
+                  <td>{{ prompt }}</td>
+                  <td>{{ scan.results[i] }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </td>
+        </tr>
+      </ng-container>
     </tbody>
   </table>
   <div *ngIf="!isLoading && scans.length === 0">No scans yet.</div>

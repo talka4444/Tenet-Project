@@ -6,8 +6,8 @@ from sqlalchemy.orm import Session
 from models.suite import Suite
 from db import get_session, init_db
 from suites import suites, SuitesOptions
-from models.scan import ScanRequest, Scan
 from models.task import Task
+from models.scan import ScanRequest, Scan
 from tasks import run_prompt, celery_app
 from celery.result import AsyncResult
 from slowapi import Limiter
@@ -65,7 +65,7 @@ def get_status(scanId: str, session: Session = Depends(get_session)):
     
     return {"completed": f"{((completed_tasks / total_tasks) * 100):.2f}%"} # calculate how many tasks are completed
 
-@app.get('/results/{scanId}')
+@app.get('/results/{scanId}', response_model=dict)
 def get_results(scanId: str, session: Session = Depends(get_session)):
     scan = session.query(Scan).filter(Scan.id == scanId).first()
     if not scan:
@@ -76,8 +76,12 @@ def get_results(scanId: str, session: Session = Depends(get_session)):
         task_status = AsyncResult(task.id, app=celery_app)
         if task_status.ready():
             # get only the latest prompt run response
+            db_task = session.query(Task).filter(Task.id == task.id).first()
             last_response = task_status.result['response']['agent_activity'][-1]['response']
             results.append({"prompt": task.prompt, "response": last_response, "status": "Finished"})
+            db_task.response = last_response
+            session.commit()
+
         else:
             results.append({"prompt": task.prompt, "status": "prompt still running..."})
 
@@ -91,14 +95,20 @@ def get_all_suites(session: Session = Depends(get_session)):
 @app.get('/scans')
 def get_all_scans(session: Session = Depends(get_session)):
     scans = session.query(Scan).all()
-    result = []
+    result: list = []
+    responses: list[str] = []
+    prompts: list[str] = []
 
     for scan in scans:
-        db_task = session.query(Task).filter(Task.scan_id == scan.id).first()
+        db_tasks = session.query(Task).filter(Task.scan_id == scan.id).all()
+        responses = [task.response for task in db_tasks]
+        prompts = [task.prompt for task in db_tasks]
+
         result.append({
             "id": scan.id,
             "url": scan.url,
-            "completed": db_task.isCompleted
+            "results": responses,
+            "prompts": prompts
         })
     
     return result
