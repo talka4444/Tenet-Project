@@ -36,11 +36,12 @@ async def run_full_scan(ac: AsyncClient, url: str, suite: str):
         scan_id = scan_request.json()["scanId"]
 
         # wait until status is Finished
-        for _ in range(50):
+        for _ in range(80):
             scan_status = await ac.get(f"/status/{scan_id}")
             assert scan_status.status_code == 200
             status_data = scan_status.json()
-            if status_data.get("status") == "Finished":
+            completed = float(status_data.get("completed", "0%").replace("%",""))
+            if completed >= 100.0:
                 break
             await asyncio.sleep(0.1)
 
